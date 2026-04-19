@@ -14,10 +14,10 @@ router.post('/login', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase().trim()]);
     const user = rows[0];
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!user) return res.status(401).json({ message: 'No account found with that email' });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!match) return res.status(401).json({ message: 'Incorrect password' });
 
     const token = jwt.sign(
       { id: user.id, role: user.role, name: user.name, email: user.email },

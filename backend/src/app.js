@@ -3,27 +3,22 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
 require('dotenv').config();
 
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
 
 /* Security headers */
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: isProd ? 'same-origin' : 'cross-origin' },
-}));
+app.use(helmet());
 
 /* Gzip compression */
 app.use(compression());
 
-/* CORS — dev: allow Vite dev server; prod: same-origin (served statically) */
-if (!isProd) {
-  app.use(cors({
-    origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:3000',
-    credentials: true,
-  }));
-}
+/* CORS — always enabled; in prod the origin is set via CLIENT_ORIGIN env var */
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:3000',
+  credentials: true,
+}));
 
 app.use(express.json());
 
@@ -55,19 +50,8 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 /* Health check */
 app.get('/api/health', (_, res) => res.json({ status: 'ok', env: process.env.NODE_ENV ?? 'development' }));
 
-/* Serve built frontend in production */
-if (isProd) {
-  const staticPath = path.join(__dirname, '../../frontend/dist');
-  app.use(express.static(staticPath));
-  app.get('*', (_, res) => {
-    res.sendFile(path.join(staticPath, 'index.html'));
-  });
-}
-
-/* 404 (dev only — prod falls through to the SPA catch-all above) */
-if (!isProd) {
-  app.use((_, res) => res.status(404).json({ message: 'Not found' }));
-}
+/* 404 */
+app.use((_, res) => res.status(404).json({ message: 'Not found' }));
 
 /* Error handler */
 app.use((err, _req, res, _next) => {
