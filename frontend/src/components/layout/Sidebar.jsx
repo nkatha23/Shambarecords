@@ -66,8 +66,8 @@ export default function Sidebar() {
               color: isActive ? '#fff' : 'rgba(255,255,255,0.55)',
               fontWeight: isActive ? 600 : 400,
               fontSize: '0.9rem',
-              background: isActive ? 'rgba(231,66,102,0.18)' : 'transparent',
-              borderLeft: isActive ? '3px solid var(--color-primary)' : '3px solid transparent',
+              background: isActive ? 'rgba(16,185,129,0.15)' : 'transparent',
+              borderLeft: isActive ? '3px solid #10b981' : '3px solid transparent',
               transition: 'all var(--transition)',
               textDecoration: 'none',
             })}

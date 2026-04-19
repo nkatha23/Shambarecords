@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Fields from './pages/Fields';
 import FieldDetail from './pages/FieldDetail';
@@ -31,6 +32,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+          <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/fields" element={<RequireAuth><Fields /></RequireAuth>} />
           <Route path="/fields/:id" element={<RequireAuth><FieldDetail /></RequireAuth>} />

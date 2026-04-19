@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
-export default function Login() {
-  const { login } = useAuth();
+export default function Register() {
+  const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,12 +16,15 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    if (form.password.length < 6) {
+      return setError('Password must be at least 6 characters');
+    }
     setLoading(true);
     try {
-      await login(form.email, form.password);
+      await register(form.name, form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message ?? 'Invalid credentials');
+      setError(err.response?.data?.message ?? 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -39,7 +42,7 @@ export default function Login() {
           </p>
           <div style={styles.divider} />
           <p style={styles.leftSub}>
-            Monitor crop progress, coordinate agents, and stay ahead of every harvest.
+            Join the platform and start tracking crop progress across your assigned fields.
           </p>
         </div>
       </div>
@@ -47,11 +50,25 @@ export default function Login() {
       {/* Right panel */}
       <div style={styles.right}>
         <div style={styles.formCard}>
-          <h2 style={styles.heading}>Welcome back</h2>
-          <p style={styles.sub}>Sign in to your account to continue.</p>
+          <h2 style={styles.heading}>Create account</h2>
+          <p style={styles.sub}>You'll be set up as a field agent. An admin can adjust your role.</p>
 
           <form onSubmit={handleSubmit} style={styles.form}>
             {error && <div style={styles.errorBox}>{error}</div>}
+
+            <Field label="Full Name">
+              <input
+                name="name"
+                type="text"
+                value={form.name}
+                onChange={handleChange}
+                required
+                placeholder="Jane Mwangi"
+                style={styles.input}
+                onFocus={focusInput}
+                onBlur={blurInput}
+              />
+            </Field>
 
             <Field label="Email">
               <input
@@ -74,7 +91,7 @@ export default function Login() {
                 value={form.password}
                 onChange={handleChange}
                 required
-                placeholder="••••••••"
+                placeholder="Min. 6 characters"
                 style={styles.input}
                 onFocus={focusInput}
                 onBlur={blurInput}
@@ -82,15 +99,14 @@ export default function Login() {
             </Field>
 
             <button type="submit" disabled={loading} style={styles.btn}>
-              {loading ? 'Signing in…' : 'Sign In'}
+              {loading ? 'Creating account…' : 'Create Account'}
             </button>
 
             <p style={styles.switchText}>
-              No account?{' '}
-              <Link to="/register" style={styles.link}>Register →</Link>
+              Already have one?{' '}
+              <Link to="/login" style={styles.link}>Sign in →</Link>
             </p>
           </form>
-
         </div>
       </div>
     </div>
@@ -179,8 +195,9 @@ const styles = {
   },
   sub: {
     color: '#687693',
-    fontSize: '0.9rem',
+    fontSize: '0.875rem',
     margin: '0 0 2rem',
+    lineHeight: 1.6,
   },
   form: {
     display: 'flex',
