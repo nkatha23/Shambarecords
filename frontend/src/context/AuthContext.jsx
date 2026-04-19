@@ -13,12 +13,21 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const login = useCallback(async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
+  function persist(data) {
     localStorage.setItem('ct_token', data.token);
     localStorage.setItem('ct_user', JSON.stringify(data.user));
     setUser(data.user);
     return data.user;
+  }
+
+  const login = useCallback(async (email, password) => {
+    const { data } = await api.post('/auth/login', { email, password });
+    return persist(data);
+  }, []);
+
+  const register = useCallback(async (name, email, password) => {
+    const { data } = await api.post('/auth/register', { name, email, password });
+    return persist(data);
   }, []);
 
   const logout = useCallback(() => {
@@ -28,7 +37,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

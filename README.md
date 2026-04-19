@@ -4,14 +4,38 @@ A simple, role-aware web application for tracking crop progress across multiple 
 
 ---
 
+## Screenshots
+
+### Admin — Dashboard
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
+> Farm-wide overview: total fields, status breakdown, stage chart, fields needing attention, and a live recent-updates feed.
+
+### Admin — Fields Table
+![Admin Fields](docs/screenshots/admin-fields.png)
+> Full field roster with stage and status badges, planting dates, assigned agents, and inline Edit / Delete actions.
+
+### Admin — Agents
+![Admin Agents](docs/screenshots/admin-agents.png)
+> All registered users with their role badge and the number of fields assigned to each.
+
+### Agent — Dashboard
+![Agent Dashboard](docs/screenshots/agent-dashboard.png)
+> A field agent's scoped view — showing only their own assigned fields and updates.
+
+### Agent — Fields
+![Agent Fields](docs/screenshots/agent-fields.png)
+> The same table view, filtered server-side to the agent's assigned fields only.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 18, Vite, React Router v6, Axios |
-| Backend | Node.js, Express |
+| Backend | Node.js, Express, Helmet, compression, express-rate-limit |
 | Database | PostgreSQL (`pg` pool) |
-| Auth | JWT (jsonwebtoken) + bcryptjs |
+| Auth | JWT (`jsonwebtoken`) + `bcryptjs` |
 | Dev runner | concurrently |
 
 ---
@@ -19,15 +43,15 @@ A simple, role-aware web application for tracking crop progress across multiple 
 ## Project Structure
 
 ```
-crop-tracker/
+Shambarecords/
 ├── package.json                  # root — runs both servers via concurrently
-├── README.md
+├── docs/screenshots/             # UI screenshots used in this README
 ├── backend/
 │   ├── package.json
 │   ├── .env.example
 │   └── src/
-│       ├── index.js              # entry point — starts Express + DB check
-│       ├── app.js                # Express setup, routes, CORS, error handler
+│       ├── index.js              # entry — env validation, DB check, server start
+│       ├── app.js                # Express: helmet, compression, rate-limit, routes, static serve
 │       ├── config/
 │       │   ├── db.js             # pg Pool (DATABASE_URL)
 │       │   ├── migrate.js        # creates tables (run once)
@@ -35,36 +59,32 @@ crop-tracker/
 │       ├── middleware/
 │       │   └── auth.js           # JWT verify + requireRole()
 │       ├── models/
-│       │   └── fieldStatus.js    # computeStatus() pure function
+│       │   └── fieldStatus.js    # computeStatus() — pure function, never stored
 │       └── routes/
-│           ├── auth.js           # POST /login, GET /me
+│           ├── auth.js           # POST /login, /register  GET /me
 │           ├── fields.js         # CRUD, role-scoped
 │           ├── updates.js        # field observations + stage changes
 │           ├── users.js          # admin manages agents
 │           └── dashboard.js      # aggregated stats per role
 └── frontend/
     ├── package.json
-    ├── vite.config.js            # proxies /api → :5000
+    ├── vite.config.js            # proxies /api → :5000 in dev
     ├── index.html
     └── src/
         ├── main.jsx
-        ├── App.jsx               # router + protected routes
+        ├── App.jsx               # router + protected route guards
         ├── styles/globals.css    # CSS variables, resets
         ├── context/AuthContext.jsx
-        ├── hooks/
-        │   ├── useAuth.js
-        │   ├── useFields.js
-        │   └── useDashboard.js
-        ├── utils/
-        │   ├── api.js            # axios instance with auth header
-        │   └── helpers.js        # date formatting, status/stage colours
+        ├── hooks/                # useAuth, useFields, useDashboard
+        ├── utils/                # axios instance, date helpers, colour maps
         ├── components/
         │   ├── common/           # Button, Badge, Modal, Table, StatCard
-        │   ├── layout/           # Sidebar, Topbar, Layout
+        │   ├── layout/           # Sidebar, Topbar, Layout wrapper
         │   ├── fields/           # FieldCard, FieldForm, FieldTable, UpdateForm
         │   └── dashboard/        # StageChart, RecentUpdates
         └── pages/
             ├── Login.jsx
+            ├── Register.jsx
             ├── Dashboard.jsx
             ├── Fields.jsx
             ├── FieldDetail.jsx
@@ -73,68 +93,27 @@ crop-tracker/
 
 ---
 
-## Setup Instructions
+## Quick Start
 
 ### Prerequisites
-
 - Node.js 18+
-- PostgreSQL 14+ running locally (or a connection string to a hosted instance)
+- PostgreSQL 14+
 
-### 1. Clone & install
+### Install & run
 
 ```bash
 git clone <repo-url>
-cd crop-tracker
+cd Shambarecords
 npm install           # installs concurrently at root
 npm run install:all   # installs backend + frontend deps
-```
-
-### 2. Configure environment
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-Edit `backend/.env`:
-
-```env
-PORT=5000
-DATABASE_URL=postgresql://YOUR_USER:YOUR_PASSWORD@localhost:5432/crop_tracker
-JWT_SECRET=replace_with_a_long_random_string
-JWT_EXPIRES_IN=7d
-CLIENT_ORIGIN=http://localhost:3000
-```
-
-### 3. Create the database
-
-```bash
-createdb crop_tracker
-```
-
-### 4. Run migrations
-
-```bash
-npm run migrate
-```
-
-Creates three tables: `users`, `fields`, `field_updates`, plus an auto-update trigger on `fields.updated_at`.
-
-### 5. Seed demo data
-
-```bash
-npm run seed
-```
-
-Inserts demo users and 5 sample fields.
-
-### 6. Start development servers
-
-```bash
-npm run dev
+npm run migrate       # create tables (run once)
+npm run seed          # load demo data (optional)
+npm run dev           # starts both servers
 ```
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5000/api
+- Health check: http://localhost:5000/api/health
 
 ---
 
@@ -146,15 +125,18 @@ npm run dev
 | Field Agent | `agent@shamba.io` | `agent123` |
 | Field Agent 2 | `agent2@shamba.io` | `agent456` |
 
+Self-registration is also available at `/register`. New accounts default to the **agent** role.
+
 ---
 
 ## API Endpoints
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/api/auth/login` | — | Login, returns JWT |
+| POST | `/api/auth/login` | — | Login, returns JWT + user |
+| POST | `/api/auth/register` | — | Self-register as agent |
 | GET | `/api/auth/me` | any | Current user info |
-| GET | `/api/fields` | any | List fields (scoped by role) |
+| GET | `/api/fields` | any | List fields (role-scoped) |
 | POST | `/api/fields` | admin | Create field |
 | GET | `/api/fields/:id` | any | Single field |
 | PUT | `/api/fields/:id` | admin | Update field |
@@ -163,13 +145,16 @@ npm run dev
 | POST | `/api/updates/:fieldId` | any | Submit stage update + notes |
 | GET | `/api/dashboard` | any | Role-aware dashboard stats |
 | GET | `/api/users` | admin | List all users |
-| POST | `/api/users` | admin | Create a new agent |
+| POST | `/api/users` | admin | Create agent (admin-managed) |
+| GET | `/api/health` | — | Health check |
+
+Auth endpoints are rate-limited to **20 requests / 15 min**. All other API endpoints allow **200 requests / 15 min**.
 
 ---
 
 ## Field Status Logic
 
-Status is **computed at query time** in `backend/src/models/fieldStatus.js` — it is never stored in the database, so it is always fresh.
+Status is **computed at query time** in `backend/src/models/fieldStatus.js` — never stored, always fresh.
 
 ```
 completed  →  stage === 'harvested'
@@ -182,8 +167,6 @@ at_risk    →  stage is 'planted' or 'growing'
 active     →  everything else
 ```
 
-This approach avoids stale cached statuses and requires no background jobs.
-
 ---
 
 ## Field Lifecycle
@@ -192,43 +175,49 @@ This approach avoids stale cached statuses and requires no background jobs.
 planted → growing → ready → harvested
 ```
 
-Stage advances are recorded as immutable rows in `field_updates` (append-only), giving a full audit trail of who changed what and when.
+Every stage change is an immutable row in `field_updates` — append-only, giving a full audit trail.
 
 ---
 
 ## Design Decisions
 
-**Monorepo with Vite proxy** — single repo, Vite's `server.proxy` forwards `/api` calls to `:5000` so there are no CORS issues in development.
+**Monorepo with Vite proxy** — Vite's `server.proxy` forwards `/api` to `:5000` in dev; in production the Express server serves the built frontend directly (no nginx required for a single-server deploy).
 
-**Status computed, not stored** — avoids stale data and background workers. The pure `computeStatus()` function runs on every fetch.
+**Status computed, not stored** — avoids stale data and background workers. `computeStatus()` runs on every fetch.
 
-**DB-level agent scoping** — agents are restricted to their assigned fields at the SQL query level on every endpoint, not just in the UI. Direct API calls cannot bypass this.
+**DB-level agent scoping** — agents are restricted to their assigned fields at the SQL query level on every endpoint. Direct API calls cannot bypass this.
 
 **Role-aware dashboard endpoint** — a single `GET /api/dashboard` returns a different payload shape depending on `req.user.role`, keeping the frontend simple.
 
-**Append-only `field_updates`** — every stage change and observation is a new row. Nothing is ever deleted from this table, providing a complete history.
+**Append-only `field_updates`** — nothing is ever deleted from this table, giving a full change history.
 
-**No external UI library** — the UI uses inline styles and CSS custom properties only, keeping the bundle small and the design consistent with the provided colour tokens.
+**No UI library** — inline styles + CSS custom properties only. Zero runtime CSS overhead, consistent with the design tokens.
+
+**Production hardening** — `helmet` sets secure HTTP headers, `compression` gzip-encodes responses, `express-rate-limit` guards against brute-force on auth routes, and required env vars are validated at startup.
 
 ---
 
 ## Assumptions
 
-- A field can only be assigned to one agent at a time.
-- Only admins can create, edit, or delete fields; agents can only submit updates.
-- The "At Risk" check uses calendar days, not business days.
-- Passwords are hashed with bcrypt (cost factor 10).
-- JWTs are stored in `localStorage` (acceptable for a demo; use `httpOnly` cookies in production).
+- A field is assigned to one agent at a time.
+- Only admins create, edit, or delete fields; agents only submit updates.
+- Self-registered users are always agents; only an admin can promote a role.
+- The "At Risk" staleness check uses calendar days.
+- JWTs are stored in `localStorage` — suitable for this context; swap to `httpOnly` cookies for stricter deployments.
 
 ---
 
-## Running in Production
+## Production Deployment
 
 ```bash
-# Build frontend
+# 1. Build the frontend
 npm run build --prefix frontend
 
-# Serve static files from backend (or use nginx)
-# Set NODE_ENV=production in backend/.env
+# 2. Set NODE_ENV in backend/.env
+echo "NODE_ENV=production" >> backend/.env
+
+# 3. Start the server — serves API + static frontend on a single port
 npm run start --prefix backend
 ```
+
+The Express server will serve `frontend/dist` as static files and fall back to `index.html` for client-side routing. No separate web server needed for a single-node deploy.

@@ -2,7 +2,7 @@ import React from 'react';
 
 const variants = {
   primary: {
-    background: 'var(--color-primary)',
+    background: '#10b981',
     color: '#fff',
     border: 'none',
   },
@@ -13,8 +13,8 @@ const variants = {
   },
   outline: {
     background: 'transparent',
-    color: 'var(--color-primary)',
-    border: '1px solid var(--color-primary)',
+    color: '#10b981',
+    border: '1px solid #10b981',
   },
   ghost: {
     background: 'transparent',
