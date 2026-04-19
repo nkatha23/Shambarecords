@@ -4,30 +4,6 @@ A simple, role-aware web application for tracking crop progress across multiple 
 
 ---
 
-## Screenshots
-
-### Admin — Dashboard
-![Admin Dashboard](docs/screenshots/admin-dashboard.png)
-> Farm-wide overview: total fields, status breakdown, stage chart, fields needing attention, and a live recent-updates feed.
-
-### Admin — Fields Table
-![Admin Fields](docs/screenshots/admin-fields.png)
-> Full field roster with stage and status badges, planting dates, assigned agents, and inline Edit / Delete actions.
-
-### Admin — Agents
-![Admin Agents](docs/screenshots/admin-agents.png)
-> All registered users with their role badge and the number of fields assigned to each.
-
-### Agent — Dashboard
-![Agent Dashboard](docs/screenshots/agent-dashboard.png)
-> A field agent's scoped view — showing only their own assigned fields and updates.
-
-### Agent — Fields
-![Agent Fields](docs/screenshots/agent-fields.png)
-> The same table view, filtered server-side to the agent's assigned fields only.
-
----
-
 ## Tech Stack
 
 | Layer | Technology |
