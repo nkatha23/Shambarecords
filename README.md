@@ -1,3 +1,4 @@
+
 # Shamba Records — Crop Progress Tracker
 
 A simple, role-aware web application for tracking crop progress across multiple fields during a growing season.
@@ -197,3 +198,6 @@ npm run start --prefix backend
 ```
 
 The Express server will serve `frontend/dist` as static files and fall back to `index.html` for client-side routing. No separate web server needed for a single-node deploy.
+
+Deployed:
+https://croptracker.onrender.com
