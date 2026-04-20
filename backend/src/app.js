@@ -14,11 +14,9 @@ app.use(helmet());
 /* Gzip compression */
 app.use(compression());
 
-/* CORS — always enabled; in prod the origin is set via CLIENT_ORIGIN env var */
-app.use(cors({
-  origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:3000',
-  credentials: true,
-}));
+/* CORS — strip any accidental trailing slash so the header matches the browser Origin exactly */
+const allowedOrigin = (process.env.CLIENT_ORIGIN ?? 'http://localhost:3000').replace(/\/$/, '');
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 
 app.use(express.json());
 
