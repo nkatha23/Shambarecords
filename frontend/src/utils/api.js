@@ -1,7 +1,14 @@
 import axios from 'axios';
 
+// In production the frontend and backend are on different domains.
+// VITE_API_URL is injected at build time by Render (e.g. https://shambarecords.onrender.com).
+// In dev, fall back to '/api' which Vite proxies to :5000.
+const BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+  : '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: BASE,
   headers: { 'Content-Type': 'application/json' },
 });
 
