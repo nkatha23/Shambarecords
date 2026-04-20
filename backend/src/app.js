@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
+app.set('trust proxy', 1); // required on Render — sits behind a proxy
 const isProd = process.env.NODE_ENV === 'production';
 
 /* Security headers */
